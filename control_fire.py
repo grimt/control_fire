@@ -3,7 +3,9 @@ from evdev import InputDevice, categorize, ecodes
 import time
 
 
-# Next: Define the Red, Gren, Yellow and Blue keys on Flirc so we can set temperatures.
+# Next: Move the code that reads the keys to a separate file. Put the desired temperature in this file. Maybe 0 = fire off.
+#     : Leave this file for reading the temperature and maybe responding to web access - or mayb this will also be in a separate file.
+#     : Define the Red, Gren, Yellow and Blue keys on Flirc so we can set temperatures.
 
 ON = True
 OFF = False
@@ -44,19 +46,20 @@ dev = InputDevice ('/dev/input/event0')
 if my_fire.debug == 1:
   print dev
 # Infinite loop waiting for input from the flirc
-for event in dev.read_loop():
-    #
-    # type should always be 1 for a keypress
-    # code is the numeric value of the key that has been pressed
-    # value 0 = key up, 1 = key down, 2 = key hold
-
+while True:
     ticks = time.time()
     print "Number of ticks since 12:00am, January 1, 1970:", ticks
+    for event in dev.read_loop():
+    	#
+        # type should always be 1 for a keypress
+        # code is the numeric value of the key that has been pressed
+        # value 0 = key up, 1 = key down, 2 = key hold
 
-
-    if event.type == ecodes.EV_KEY:
-        if my_fire.debug == 1:
-            print (categorize(event))
-            print 'type: ' + str (event.type) + ' code: ' + str (event.code) + ' value ' + str (event.value)
-        if event.code == STOP: # stop key on remote
-            break
+        if event.type == ecodes.EV_KEY:
+            if my_fire.debug == 1:
+                print (categorize(event))
+                print 'type: ' + str (event.type) + ' code: ' + str (event.code) + ' value ' + str (event.value)
+	    if event.value == 0: # key up
+	        break
+    if event.code == STOP: # stop key on remote
+        break
