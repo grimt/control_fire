@@ -31,9 +31,9 @@ class Fire:
 
     def print_debug_state(self):
         if self.debug == 1:
-            print 'Debug is ON'
+            print ('Debug is ON')
         else:
-            print 'Debug is OFF'
+            print ('Debug is OFF')
 
 my_fire = Fire ()
  
@@ -44,11 +44,11 @@ my_fire.print_debug_state ()
 dev = InputDevice ('/dev/input/event0')
 
 if my_fire.debug == 1:
-  print dev
+  print (dev)
 # Infinite loop waiting for input from the flirc
 while True:
     ticks = time.time()
-    print "Number of ticks since 12:00am, January 1, 1970:", ticks
+    print ("Number of ticks since 12:00am, January 1, 1970:", ticks)
     for event in dev.read_loop():
     	#
         # type should always be 1 for a keypress
@@ -58,8 +58,8 @@ while True:
         if event.type == ecodes.EV_KEY:
             if my_fire.debug == 1:
                 print (categorize(event))
-                print 'type: ' + str (event.type) + ' code: ' + str (event.code) + ' value ' + str (event.value)
-	    if event.value == 0: # key up
-	        break
+                print ( 'type: ' + str (event.type) + ' code: ' + str (event.code) + ' value ' + str (event.value))
+            if event.value == 0:  # key up
+                break
     if event.code == STOP: # stop key on remote
         break
