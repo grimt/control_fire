@@ -74,9 +74,14 @@ def write_temp_to_file (key):
     else:
         desired_temperature = 0
 
-    f = open ('/tmp/temperature.txt','wt')
-    f.write (str(desired_temperature))
-    f.close ()
+    try:
+        f = open ('/tmp/temperature.txt','wt')
+        f.write (str(desired_temperature))
+        f.close ()
+    except IOError:
+        if my_fire.debug_level >=2:
+    	    print ("Cant open file")
+    		
 
 
 def read_remote (debug_on, started_evt ):
