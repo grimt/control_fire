@@ -14,6 +14,11 @@ OFF = False
 
 # Key definitions
 STOP = 45
+REMOTE_KEY_RED = 2
+REMOTE_KEY_GREEN = 3
+REMOTE_KEY_YELLOW = 4
+REMOTE_KEY_BLUE = 5 
+
 
 class Fire:
 
@@ -38,6 +43,25 @@ class Fire:
             print ('Debug is OFF')
 
 
+
+def write_temp_to_file (key):
+   
+    if key == REMOTE_KEY_RED:
+        desired_temperature = 0
+    elif key == REMOTE_KEY_GREEN:
+        desired_temperature = 18
+    elif key == REMOTE_KEY_YELLOW:
+        desired_temperature = 19
+    elif key == REMOTE_KEY_BLUE:
+        desired_temperature = 20
+    else:
+        desired_temperature = 0
+
+    f = open ('/tmp/temperature.txt','wt')
+    f.write (str(desired_temperature))
+    f.close ()
+
+
 def read_remote (debug_on, started_evt ):
     started_evt.set()
     dev = InputDevice ('/dev/input/event0')
@@ -54,9 +78,10 @@ def read_remote (debug_on, started_evt ):
                 print (categorize(event))
                 print ( 'type: ' + str (event.type) + ' code: ' + str (event.code) + ' value ' + str (event.value))
             if event.value == 0:  # key up
-                time.sleep(1) 
-        if event.code == STOP: # stop key on remote
-            sys.exit
+                if event.code == REMOTE_KEY_RED or event.code == REMOTE_KEY_GREEN or event.code == REMOTE_KEY_YELLOW or event.code == REMOTE_KEY_BLUE:
+                    write_temp_to_file(event.code) 
+                    time.sleep(1)
+                    
 
 my_fire = Fire ()
  
@@ -81,4 +106,4 @@ while True:
     print ("Number of ticks since 12:00am, January 1, 1970:", ticks)
     time.sleep(2)
     
-
+# Next write a task to loop, reading the file and printing the desired temperature
