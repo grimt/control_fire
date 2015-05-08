@@ -9,11 +9,26 @@ ON = True
 OFF = False
 
 # Key definitions
-STOP = 45
 REMOTE_KEY_RED = 2
 REMOTE_KEY_GREEN = 3
 REMOTE_KEY_YELLOW = 4
 REMOTE_KEY_BLUE = 5 
+
+# GPIO PINs
+OUT_MEASURED_TEMP_RED = 7
+OUT_MEASURED_TEMP_GREEN = 8
+OUT_MEASURED_TEMP_YELLOW = 23
+OUT_MEASURED_TEMP_BLUE = 24
+
+OUT_DESIRED_TEMP_GREEN = 17
+OUT_DESIRED_TEMP_YELLOW = 21
+OUT_DESIRED_TEMP_BLUE = 22
+
+OUT_RELAY = 18
+
+IN_MEASURE_TEMP = 4
+
+#--------------------------------------- Class Definitions ----------------------------
 
 
 class Fire:
@@ -90,7 +105,7 @@ def read_remote (debug_on, started_evt ):
 
 my_fire = Fire ()
  
-my_fire.debug_level_set (1)
+my_fire.debug_level_set(2)
 
 my_fire.print_debug_state ()
 
