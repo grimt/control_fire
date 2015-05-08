@@ -41,6 +41,12 @@ class Fire:
             print ('Debug is ON')
         else:
             print ('Debug is OFF')
+            
+	def desired_temp_set (self, temp)
+		self.required_temperature = temp
+		
+	def desired_temp_get (self)
+		return self.required_temperature
 
 
 
@@ -102,8 +108,17 @@ started_evt.wait()
 print('countdown is running')
 # Infinite loop waiting for input from the flirc
 while True:
-    ticks = time.time()
-    print ("Number of ticks since 12:00am, January 1, 1970:", ticks)
+	try:
+		f = open ('/tmp/temperature.txt','rt')
+    	temp = f.read ()
+    	f.close ()
+    	my_fire.desired_temp_set  (int(temp))
+    except IOError:
+    	if my_fire.debug:
+    		print ("Cant open file")
+    		
+    if my_fire.debug:
+    	print(str (my_fire.desired_temp_get()))
+	
     time.sleep(2)
     
-# Next write a task to loop, reading the file and printing the desired temperature
