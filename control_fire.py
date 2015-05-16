@@ -2,6 +2,7 @@
 from evdev import InputDevice, categorize, ecodes
 from threading import Thread, Event
 import Adafruit_DHT
+import RPi.GPIO as GPIO
 
 import sys
 import time
@@ -31,6 +32,20 @@ OUT_RELAY_PIN = 18
 IN_MEASURE_TEMP_PIN = 4
 
 DHT_22 = 22
+
+def init_GPIO():
+    GPIO.setwarnings(False)
+    GPIO.setmode (GPIO.BCM)
+
+    GPIO.setup (OUT_MEASURED_TEMP_RED_LED, GPIO.OUT)
+    GPIO.setup (OUT_MEASURED_TEMP_GREEN_LED, GPIO.OUT)
+    GPIO.setup (OUT_MEASURED_TEMP_YELLOW_LED, GPIO.OUT)
+    GPIO.setup (OUT_MEASURED_TEMP_BLUE_LED, GPIO.OUT)
+    GPIO.setup (OUT_DESIRED_TEMP_GREEN_LED, GPIO.OUT)
+    GPIO.setup (OUT_DESIRED_TEMP_YELLOW_LED, GPIO.OUT)
+    GPIO.setup (OUT_DESIRED_TEMP_BLUE_LED, GPIO.OUT)
+
+    GPIO.setup(OUT_RELAY_PIN, GPIO.OUT)
 
 #--------------------------------------- Class Definitions ----------------------------
 
@@ -75,6 +90,19 @@ class Fire:
 # This may change in the future. These abstractions allow for the
 # data communication  method to change.
 
+
+def set_desired_temp_led (key):
+    # First set all the desired temp LEDs to off
+    GPIO.output (OUT_DESIRED_TEMP_GREEN_LED, False)
+    GPIO.output (OUT_DESIRED_TEMP_YELLOW_LED, False)
+    GPIO.output (OUT_DESIRED_TEMP_BLUE_LED, False)
+
+    if key == REMOTE_KEY_GREEN:
+       GPIO.output (OUT_DESIRED_TEMP_GREEN_LED, True) 
+    elif key == REMOTE_KEY_YELLOW:
+        GPIO.output (OUT_DESIRED_TEMP_YELLOW_LED, True)
+    elif key == REMOTE_KEY_BLUE:
+        GPIO.output (OUT_DESIRED_TEMP_BLUE_LED, True)
 
 def write_desired_temp_to_file (key):
    
@@ -122,6 +150,7 @@ def write_measured_temp_to_file (temp):
     		
 
 def set_desired_temp (key_press):
+    set_desired_temp_led (key_press)
     write_desired_temp_to_file (key_press)
 
 def set_measured_temp (temp):
@@ -191,6 +220,8 @@ def read_temp (debug_on, read_temperature_evt):
 
 #---------------------------------------------------------------------------------
 
+
+init_GPIO ()
 
 my_fire = Fire ()
  
