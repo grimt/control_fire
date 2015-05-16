@@ -55,7 +55,7 @@ class Fire:
     debug_level = 0
     required_temperature = 0
     measured_temperature = 0
-    fire_state = 0 
+    fire_state = OFF 
 
 
     def __init__ (self):
@@ -89,13 +89,43 @@ class Fire:
 def switch_fire (off_or_on):
     if off_or_on == ON:
         GPIO.output (OUT_RELAY_PIN, True)
+        my_fire.fire_state = ON
         if my_fire.debug_level >=1:
     	    print ("Fire is ON")
     else:
         GPIO.output (OUT_RELAY_PIN, False)
+        my_fire.fire_state = OFF
         if my_fire.debug_level >=1:
     	    print ("Fire is OFF")
-  
+ 
+
+
+def run_temp_hysteresis (desired, actual):
+    if my_fire.debug_level >= 2:
+        print ('Hysteresis: current state: ' + str (my_fire.fire_state) + ' desired: ' + str (desired) + ' actual: ' + str (actual))
+        
+    if desired == 18:
+        if my_fire.fire_state == OFF:
+            if actual <= 17:
+                switch_fire (ON)
+        else:
+            if actual >= 18.5:
+                switch_fire (OFF)
+    elif desired == 19:
+        if my_fire.fire_state == OFF:
+            if actual <= 18:
+                switch_fire (ON)
+        else:
+            if actual >= 19.5:
+                switch_fire (OFF)
+    elif desired == 20:
+        if my_fire.fire_state == OFF:
+            if actual <= 19:
+                switch_fire (ON)
+        else:
+            if actual >= 2.5:
+                switch_fire (OFF)
+   
 
 def control_temperature (desired, actual):
     if desired == 0:
@@ -103,7 +133,7 @@ def control_temperature (desired, actual):
     elif desired == 999:
         switch_fire (ON)
     else:
-        print ('Temperature logic here')
+        run_temp_hysteresis (desired, actual) 
 
 # Right now we are passing data between threads by writing to a file.
 # This may change in the future. These abstractions allow for the
@@ -122,6 +152,25 @@ def set_desired_temp_led (key):
         GPIO.output (OUT_DESIRED_TEMP_YELLOW_LED, True)
     elif key == REMOTE_KEY_BLUE:
         GPIO.output (OUT_DESIRED_TEMP_BLUE_LED, True)
+
+def set_measured_temp_led (temp):
+    # First set all the desired temp LEDs to off
+
+    GPIO.output (OUT_MEASURED_TEMP_RED_LED, False)
+    GPIO.output (OUT_MEASURED_TEMP_GREEN_LED, False)
+    GPIO.output (OUT_MEASURED_TEMP_YELLOW_LED, False)
+    GPIO.output (OUT_MEASURED_TEMP_BLUE_LED, False)
+
+    if temp >= 16 and temp <18:
+        GPIO.output (OUT_MEASURED_TEMP_RED_LED, True) 
+    elif temp >= 18 and temp < 19:
+       GPIO.output (OUT_MEASURED_TEMP_GREEN_LED, True) 
+    elif temp >= 19 and temp < 20:
+        GPIO.output (OUT_MEASURED_TEMP_YELLOW_LED, True)
+    elif temp >= 20:
+        GPIO.output (OUT_MEASURED_TEMP_BLUE_LED, True)
+
+
 
 def write_desired_temp_to_file (key):
    
@@ -193,6 +242,7 @@ def set_desired_temp (key_press):
     write_desired_temp_to_file (key_press)
 
 def set_measured_temp (temp):
+    set_measured_temp_led (temp)
     write_measured_temp_to_file (temp)
 
 def get_measured_temp():
@@ -251,7 +301,7 @@ def read_temp (debug_on, read_temperature_evt):
         if humidity is not None and temperature is not None:
             if debug_on > 5:
                 print 'Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity)
-                set_measured_temp (temperature)
+            set_measured_temp (temperature)
         else:
             if debug_on > 5:
                 print 'Failed to get reading. Try again!'
