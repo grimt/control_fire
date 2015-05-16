@@ -55,6 +55,8 @@ class Fire:
     debug_level = 0
     required_temperature = 0
     measured_temperature = 0
+    fire_state = 0 
+
 
     def __init__ (self):
         self.description = "A fire to heat the home"
@@ -84,7 +86,24 @@ class Fire:
 #--------------------------- End of Class Fire ----------------------
 
 
+def switch_fire (off_or_on):
+    if off_or_on == ON:
+        GPIO.output (OUT_RELAY_PIN, True)
+        if my_fire.debug_level >=1:
+    	    print ("Fire is ON")
+    else:
+        GPIO.output (OUT_RELAY_PIN, False)
+        if my_fire.debug_level >=1:
+    	    print ("Fire is OFF")
+  
 
+def control_temperature (desired, actual):
+    if desired == 0:
+        switch_fire (OFF)
+    elif desired == 999:
+        switch_fire (ON)
+    else:
+        print ('Temperature logic here')
 
 # Right now we are passing data between threads by writing to a file.
 # This may change in the future. These abstractions allow for the
@@ -107,7 +126,27 @@ def set_desired_temp_led (key):
 def write_desired_temp_to_file (key):
    
     if key == REMOTE_KEY_RED:
+        # The red remote button toggles the fire off/on irrespective of
+        # temperature. This is represented in the file by:
+        # on = 999
+        # off = 0
+        # To Toggle the temperature we must first read it from the file.
         desired_temperature = 0
+        try:
+            f = open ('/tmp/temperature.txt','rt')
+            temp = f.read ()
+            desired_temperature = int (temp)
+            f.close ()
+            if desired_temperature == 0:
+                desired_temperature = 999
+            elif desired_temperature > 0:
+                desired_temperature = 0
+
+        except IOError:
+            if my_fire.debug_level >=2:
+    	        print ("Cant open file")
+
+
     elif key == REMOTE_KEY_GREEN:
         desired_temperature = 18
     elif key == REMOTE_KEY_YELLOW:
@@ -266,6 +305,8 @@ while True:
     if my_fire.debug_level >= 2:
         print ('Measured: ' + str (my_fire.measured_temp_get()))
 
-   
+  
+    control_temperature (my_fire.desired_temp_get(),my_fire.measured_temp_get()) 
+
     time.sleep(2)
     
