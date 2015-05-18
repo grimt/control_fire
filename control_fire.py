@@ -10,6 +10,11 @@ import time
 
 ON = True
 OFF = False
+TEMPERATURE_OFFSET = 2 # Account for temp sensor being close  to the fire
+
+DEBUG_LEVEL_1 = 1
+DEBUG_LEVEL_2 = 2
+DEBUG_LEVEL_6 = 6
 
 # Key definitions
 REMOTE_KEY_RED = 2
@@ -106,24 +111,26 @@ def run_temp_hysteresis (desired, actual):
         
     if desired == 18:
         if my_fire.fire_state == OFF:
-            if actual <= 17:
+            print ('Here 1 actual: ' + str (actual))
+            if float(actual) <= float(17.0):
+                print ('Here 2')
                 switch_fire (ON)
         else:
-            if actual >= 18.5:
+            if float(actual) >= float(18.5):
                 switch_fire (OFF)
     elif desired == 19:
         if my_fire.fire_state == OFF:
-            if actual <= 18:
+            if float(actual) <= float(18.0):
                 switch_fire (ON)
         else:
-            if actual >= 19.5:
+            if float(actual) >= float(19.5):
                 switch_fire (OFF)
     elif desired == 20:
         if my_fire.fire_state == OFF:
-            if actual <= 19:
+            if float(actual) <= float(19.0):
                 switch_fire (ON)
         else:
-            if actual >= 2.5:
+            if float(actual) >= float(20.5):
                 switch_fire (OFF)
    
 
@@ -181,29 +188,21 @@ def write_desired_temp_to_file (key):
         # off = 0
         # To Toggle the temperature we must first read it from the file.
         desired_temperature = 0
-        try:
-            f = open ('/tmp/temperature.txt','rt')
-            temp = f.read ()
-            desired_temperature = int (temp)
-            f.close ()
-            if desired_temperature == 0:
-                desired_temperature = 999
-            elif desired_temperature > 0:
-                desired_temperature = 0
-
-        except IOError:
-            if my_fire.debug_level >=2:
-    	        print ("Cant open file")
-
-
+        temp = get_desired_temp_from_file ()
+        desired_temperature = int (temp)
+        print ('Here before: ' + str (desired_temperature))
+        if desired_temperature == 0:
+            desired_temperature = 999
+        elif desired_temperature > 0:
+            desired_temperature = 0
+        print ('Here after: ' + str (desired_temperature))
+    
     elif key == REMOTE_KEY_GREEN:
         desired_temperature = 18
     elif key == REMOTE_KEY_YELLOW:
         desired_temperature = 19
     elif key == REMOTE_KEY_BLUE:
         desired_temperature = 20
-    else:
-        desired_temperature = 0
 
     try:
         f = open ('/tmp/temperature.txt','wt')
@@ -221,7 +220,7 @@ def read_measured_temp_from_file ():
         f.close ()
     except IOError:
         if my_fire.debug_level >=2:
-    	    print ("Cant open file")
+    	    print ("Cant open file temperature.txt")
 
     return temp
 
@@ -230,7 +229,8 @@ def write_measured_temp_to_file (temp):
 
     try:
         f = open ('/tmp/measured_temperature.txt','wt')
-        f.write (str (temp))
+        f.write ('{0:0.1f}'.format(temp))
+        #print 'Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity)
         f.close ()
     except IOError:
         if my_fire.debug_level >= 2:
@@ -301,11 +301,13 @@ def read_temp (debug_on, read_temperature_evt):
         if humidity is not None and temperature is not None:
             if debug_on > 5:
                 print 'Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity)
+            temperature = temperature + TEMPERATURE_OFFSET
             set_measured_temp (temperature)
+            time.sleep(10)
         else:
             if debug_on > 5:
                 print 'Failed to get reading. Try again!'
-        time.sleep(2)
+            time.sleep(2)
 
 #---------------------------------------------------------------------------------
 
@@ -314,7 +316,7 @@ init_GPIO ()
 
 my_fire = Fire ()
  
-my_fire.debug_level_set(2)
+my_fire.debug_level_set(DEBUG_LEVEL_6)
 
 my_fire.print_debug_state ()
 
@@ -355,8 +357,9 @@ while True:
     if my_fire.debug_level >= 2:
         print ('Measured: ' + str (my_fire.measured_temp_get()))
 
+    print ('State: ' + str(my_fire.fire_state))
   
-    control_temperature (my_fire.desired_temp_get(),my_fire.measured_temp_get()) 
+    control_temperature (my_fire.desired_temp_get(), my_fire.measured_temp_get()) 
 
     time.sleep(2)
     
