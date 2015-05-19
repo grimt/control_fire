@@ -39,20 +39,6 @@ IN_MEASURE_TEMP_PIN = 4
 
 DHT_22 = 22
 
-def init_GPIO():
-    GPIO.setwarnings(False)
-    GPIO.setmode (GPIO.BCM)
-
-    GPIO.setup (OUT_MEASURED_TEMP_RED_LED, GPIO.OUT)
-    GPIO.setup (OUT_MEASURED_TEMP_GREEN_LED, GPIO.OUT)
-    GPIO.setup (OUT_MEASURED_TEMP_YELLOW_LED, GPIO.OUT)
-    GPIO.setup (OUT_MEASURED_TEMP_BLUE_LED, GPIO.OUT)
-    GPIO.setup (OUT_DESIRED_TEMP_GREEN_LED, GPIO.OUT)
-    GPIO.setup (OUT_DESIRED_TEMP_YELLOW_LED, GPIO.OUT)
-    GPIO.setup (OUT_DESIRED_TEMP_BLUE_LED, GPIO.OUT)
-
-    GPIO.setup(OUT_RELAY_PIN, GPIO.OUT)
-
 #--------------------------------------- Class Definitions ----------------------------
 
 
@@ -90,6 +76,21 @@ class Fire:
         return self.measured_temperature
 
 #--------------------------- End of Class Fire ----------------------
+
+
+def init_GPIO():
+    GPIO.setwarnings(False)
+    GPIO.setmode (GPIO.BCM)
+
+    GPIO.setup (OUT_MEASURED_TEMP_RED_LED, GPIO.OUT)
+    GPIO.setup (OUT_MEASURED_TEMP_GREEN_LED, GPIO.OUT)
+    GPIO.setup (OUT_MEASURED_TEMP_YELLOW_LED, GPIO.OUT)
+    GPIO.setup (OUT_MEASURED_TEMP_BLUE_LED, GPIO.OUT)
+    GPIO.setup (OUT_DESIRED_TEMP_GREEN_LED, GPIO.OUT)
+    GPIO.setup (OUT_DESIRED_TEMP_YELLOW_LED, GPIO.OUT)
+    GPIO.setup (OUT_DESIRED_TEMP_BLUE_LED, GPIO.OUT)
+
+    GPIO.setup(OUT_RELAY_PIN, GPIO.OUT)
 
 
 def switch_fire (off_or_on):
