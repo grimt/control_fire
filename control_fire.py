@@ -137,6 +137,8 @@ def run_temp_hysteresis (desired, actual):
    
 
 def control_temperature (desired, actual):
+    # The first two checks are for override from the
+    # red key on the remote.
     if desired == 0:
         switch_fire (OFF)
     elif desired == 999:
@@ -149,7 +151,7 @@ def control_temperature (desired, actual):
 # data communication  method to change.
 
 
-def set_desired_temp_led (key):
+def switch_on_desired_temp_led (key):
     # First set all the desired temp LEDs to off
     GPIO.output (OUT_DESIRED_TEMP_GREEN_LED, False)
     GPIO.output (OUT_DESIRED_TEMP_YELLOW_LED, False)
@@ -162,7 +164,7 @@ def set_desired_temp_led (key):
     elif key == REMOTE_KEY_BLUE:
         GPIO.output (OUT_DESIRED_TEMP_BLUE_LED, True)
 
-def set_measured_temp_led (temp):
+def switch_on_measured_temp_led (temp):
     # First set all the desired temp LEDs to off
 
     GPIO.output (OUT_MEASURED_TEMP_RED_LED, False)
@@ -180,6 +182,20 @@ def set_measured_temp_led (temp):
         GPIO.output (OUT_MEASURED_TEMP_BLUE_LED, True)
 
 
+# Functions to move date between threads using temporary  files.
+# This mechanism may change
+
+def read_desired_temp_from_file():
+    temp = 0
+    try:
+        f = open ('/tmp/temperature.txt','rt')
+        temp = f.read ()
+        f.close ()
+    except IOError:
+        if my_fire.debug_level >=2:
+            print ("Cant open file")
+
+    return temp
 
 def write_desired_temp_to_file (key):
    
@@ -190,7 +206,7 @@ def write_desired_temp_to_file (key):
         # off = 0
         # To Toggle the temperature we must first read it from the file.
         desired_temperature = 0
-        temp = get_desired_temp_from_file ()
+        temp = read_desired_temp_from_file ()
         desired_temperature = int (temp)
         print ('Here before: ' + str (desired_temperature))
         if desired_temperature == 0:
@@ -239,33 +255,23 @@ def write_measured_temp_to_file (temp):
             print ("Cant open file")
     		
 
-def set_desired_temp (key_press):
-    set_desired_temp_led (key_press)
+# Higher level functions to move the temperature data between threads. Currently
+# we are using temporary files, this may change.
+
+def update_desired_temp (key_press):
+    switch_on_desired_temp_led (key_press)
     write_desired_temp_to_file (key_press)
 
-def set_measured_temp (temp):
-    set_measured_temp_led (temp)
+def update_measured_temp (temp):
+    switch_on_measured_temp_led (temp)
     write_measured_temp_to_file (temp)
 
-def get_measured_temp():
+def read_measured_temp():
     return read_measured_temp_from_file()
 
-def get_desired_temp_from_file():
-    temp = 0
-    try:
-        f = open ('/tmp/temperature.txt','rt')
-        temp = f.read ()
-        f.close ()
-    except IOError:
-        if my_fire.debug_level >=2:
-    	    print ("Cant open file")
-
-    return temp
-
-def get_desired_temp():
-    return (get_desired_temp_from_file ())
+def read_desired_temp():
+    return (read_desired_temp_from_file ())
    
-
 
 
 def read_remote (debug_on, read_remote_evt):
@@ -285,12 +291,14 @@ def read_remote (debug_on, read_remote_evt):
                 print ( 'type: ' + str (event.type) + ' code: ' + str (event.code) + ' value ' + str (event.value))
             if event.value == 0:  # key up
                 if event.code == REMOTE_KEY_RED or event.code == REMOTE_KEY_GREEN or event.code == REMOTE_KEY_YELLOW or event.code == REMOTE_KEY_BLUE:
-                    set_desired_temp (event.code) 
+                    update_desired_temp (event.code) 
                     time.sleep(1)
 
 
 
 def read_temp (debug_on, read_temperature_evt):
+    # Read the temperature from the DHT22 temperature sensor.
+    
     read_temperature_evt.set()
     while True:
         humidity, temperature = Adafruit_DHT.read(DHT_22,IN_MEASURE_TEMP_PIN )
@@ -304,7 +312,7 @@ def read_temp (debug_on, read_temperature_evt):
             if debug_on > 5:
                 print 'Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity)
             temperature = temperature + TEMPERATURE_OFFSET
-            set_measured_temp (temperature)
+            update_measured_temp (temperature)
             time.sleep(10)
         else:
             if debug_on > 5:
@@ -313,20 +321,23 @@ def read_temp (debug_on, read_temperature_evt):
 
 #---------------------------------------------------------------------------------
 
+# Main thread:
 
+# Init the hardware
 init_GPIO ()
 
+# Instantiate the main class
 my_fire = Fire ()
- 
+
+# Set the debug level
 my_fire.debug_level_set(DEBUG_LEVEL_6)
 
 my_fire.print_debug_state ()
 
-# Create the event objects that will be used to signal startup
+# Create and lanch the two threads
 read_temperature_evt = Event()
 read_remote_evt = Event()
 
-# Launch the threads and pass the events
 if my_fire.debug_level >=5:
     print('Launching read_remote')
 t = Thread(target=read_remote, args=(my_fire.debug_level,read_remote_evt))
@@ -338,22 +349,22 @@ t = Thread(target=read_temp, args=(my_fire.debug_level,read_temperature_evt))
 t.start()
 
 
-
 # Wait for the threads to start
 read_remote_evt.wait()
 read_temperature_evt.wait()
 
-# Infinite loop waiting for input from the flirc
+# Infinite loop reading data from the other threads and running the
+# control algorithm.
 while True:
 
-    temp = get_desired_temp ()
+    temp = read_desired_temp ()
     my_fire.desired_temp_set  (int(temp))
   
     if my_fire.debug_level >= 2:
         print ('Desired: ' + str (my_fire.desired_temp_get()))
 	 
     
-    temp = get_measured_temp ()
+    temp = read_measured_temp ()
     my_fire.measured_temp_set (temp)
 
     if my_fire.debug_level >= 2:
