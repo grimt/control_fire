@@ -12,6 +12,7 @@ ON = True
 OFF = False
 TEMPERATURE_OFFSET = 2 # Account for temp sensor being close  to the fire
 
+DEBUG_LEVEL_0 = 0 # Debug off
 DEBUG_LEVEL_1 = 1
 DEBUG_LEVEL_2 = 2
 DEBUG_LEVEL_6 = 6
@@ -110,31 +111,30 @@ def switch_fire (off_or_on):
 def run_temp_hysteresis (desired, actual):
     if my_fire.debug_level >= 2:
         print ('Hysteresis: current state: ' + str (my_fire.fire_state) + ' desired: ' + str (desired) + ' actual: ' + str (actual))
-        
-    if desired == 18:
-        if my_fire.fire_state == OFF:
-            print ('Here 1 actual: ' + str (actual))
-            if float(actual) <= float(17.0):
-                print ('Here 2')
-                switch_fire (ON)
-        else:
-            if float(actual) >= float(18.5):
-                switch_fire (OFF)
-    elif desired == 19:
-        if my_fire.fire_state == OFF:
-            if float(actual) <= float(18.0):
-                switch_fire (ON)
-        else:
-            if float(actual) >= float(19.5):
-                switch_fire (OFF)
-    elif desired == 20:
-        if my_fire.fire_state == OFF:
-            if float(actual) <= float(19.0):
-                switch_fire (ON)
-        else:
-            if float(actual) >= float(20.5):
-                switch_fire (OFF)
-   
+    try:    
+        if desired == 18:
+            if my_fire.fire_state == OFF:
+                if float(actual) <= float(17.0):
+                    switch_fire (ON)
+            else:
+                if float(actual) >= float(18.5):
+                    switch_fire (OFF)
+        elif desired == 19:
+            if my_fire.fire_state == OFF:
+                if float(actual) <= float(18.0):
+                    switch_fire (ON)
+            else:
+                if float(actual) >= float(19.5):
+                    switch_fire (OFF)
+        elif desired == 20:
+            if my_fire.fire_state == OFF:
+                if float(actual) <= float(19.0):
+                    switch_fire (ON)
+            else:
+                if float(actual) >= float(20.5):
+                    switch_fire (OFF)
+    except ValueError:
+        print ('ValueError exception: ')
 
 def control_temperature (desired, actual):
     # The first two checks are for override from the
@@ -208,12 +208,10 @@ def write_desired_temp_to_file (key):
         desired_temperature = 0
         temp = read_desired_temp_from_file ()
         desired_temperature = int (temp)
-        print ('Here before: ' + str (desired_temperature))
         if desired_temperature == 0:
             desired_temperature = 999
         elif desired_temperature > 0:
             desired_temperature = 0
-        print ('Here after: ' + str (desired_temperature))
     
     elif key == REMOTE_KEY_GREEN:
         desired_temperature = 18
@@ -311,7 +309,7 @@ def read_temp (debug_on, read_temperature_evt):
         if humidity is not None and temperature is not None:
             if debug_on > 5:
                 print 'Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity)
-            temperature = temperature + TEMPERATURE_OFFSET
+            temperature = temperature - TEMPERATURE_OFFSET
             update_measured_temp (temperature)
             time.sleep(10)
         else:
@@ -330,7 +328,7 @@ init_GPIO ()
 my_fire = Fire ()
 
 # Set the debug level
-my_fire.debug_level_set(DEBUG_LEVEL_6)
+my_fire.debug_level_set(DEBUG_LEVEL_0)
 
 my_fire.print_debug_state ()
 
@@ -369,8 +367,7 @@ while True:
 
     if my_fire.debug_level >= 2:
         print ('Measured: ' + str (my_fire.measured_temp_get()))
-
-    print ('State: ' + str(my_fire.fire_state))
+        print ('State: ' + str(my_fire.fire_state))
   
     control_temperature (my_fire.desired_temp_get(), my_fire.measured_temp_get()) 
 
