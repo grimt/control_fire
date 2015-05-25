@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # modules to read from the flirc
 from evdev import InputDevice, categorize, ecodes
 from threading import Thread, Event
@@ -327,8 +329,10 @@ init_GPIO ()
 # Instantiate the main class
 my_fire = Fire ()
 
+my_fire.desired_temp_set (0)
+
 # Set the debug level
-my_fire.debug_level_set(DEBUG_LEVEL_0)
+my_fire.debug_level_set(DEBUG_LEVEL_2)
 
 my_fire.print_debug_state ()
 
