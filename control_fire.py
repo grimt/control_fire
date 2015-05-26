@@ -27,7 +27,6 @@ REMOTE_KEY_GREEN = 3
 REMOTE_KEY_YELLOW = 4
 REMOTE_KEY_BLUE = 5 
 
-
 # GPIO PINs
 OUT_MEASURED_TEMP_RED_LED = 7
 OUT_MEASURED_TEMP_GREEN_LED = 8
@@ -53,7 +52,6 @@ class Fire:
     required_temperature = 0
     measured_temperature = 0
     fire_state = OFF 
-
 
     def __init__ (self):
         self.description = "A fire to heat the home"
