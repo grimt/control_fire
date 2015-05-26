@@ -341,11 +341,9 @@ my_fire.debug_level_set(DEBUG_LEVEL_2)
 my_fire.print_debug_state ()
 
 # start logging
-logging.basicConfig(filename='/var/log/control_fire.log',level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/control_fire.log',level=logging.DEBUG)
 
-logging.debug('This message should go to the log file')
-logging.info('So should this')
-logging.warning('And this, too')
+logging.info('Start logging')
 
 # Create and lanch the two threads
 read_temperature_evt = Event()
