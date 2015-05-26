@@ -9,6 +9,8 @@ import RPi.GPIO as GPIO
 import sys
 import time
 
+import logging
+import logging.handlers
 
 ON = True
 OFF = False
@@ -102,11 +104,13 @@ def switch_fire (off_or_on):
         my_fire.fire_state = ON
         if my_fire.debug_level >=1:
     	    print ("Fire is ON")
+        logging.info('Fire is ON')
     else:
         GPIO.output (OUT_RELAY_PIN, False)
         my_fire.fire_state = OFF
         if my_fire.debug_level >=1:
     	    print ("Fire is OFF")
+        logging.info('Fire is OFF')
  
 
 
@@ -142,9 +146,11 @@ def control_temperature (desired, actual):
     # The first two checks are for override from the
     # red key on the remote.
     if desired == 0:
-        switch_fire (OFF)
+        if my_fire.fire_state == ON:
+            switch_fire (OFF)
     elif desired == 999:
-        switch_fire (ON)
+        if my_fire.fire_state == OFF:
+            switch_fire (ON)
     else:
         run_temp_hysteresis (desired, actual) 
 
@@ -336,6 +342,13 @@ my_fire.debug_level_set(DEBUG_LEVEL_2)
 
 my_fire.print_debug_state ()
 
+# start logging
+logging.basicConfig(filename='/var/log/control_fire.log',level=logging.DEBUG)
+
+logging.debug('This message should go to the log file')
+logging.info('So should this')
+logging.warning('And this, too')
+
 # Create and lanch the two threads
 read_temperature_evt = Event()
 read_remote_evt = Event()
@@ -354,6 +367,7 @@ t.start()
 # Wait for the threads to start
 read_remote_evt.wait()
 read_temperature_evt.wait()
+
 
 # Infinite loop reading data from the other threads and running the
 # control algorithm.
