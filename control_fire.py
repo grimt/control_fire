@@ -139,6 +139,7 @@ def run_temp_hysteresis (desired, actual):
                     switch_fire (OFF)
     except ValueError:
         print ('ValueError exception: ')
+        logging.exception ('ValueError exception')
 
 def control_temperature (desired, actual):
     # The first two checks are for override from the
@@ -199,7 +200,8 @@ def read_desired_temp_from_file():
         f.close ()
     except IOError:
         if my_fire.debug_level >=2:
-            print ("Cant open file")
+            print ("Cant open file temperature.txt for reading")
+        logging.exception("Cant open file temperature.txt for reading")
 
     return temp
 
@@ -232,7 +234,8 @@ def write_desired_temp_to_file (key):
         f.close ()
     except IOError:
         if my_fire.debug_level >= 2:
-    	    print ("Cant open file")
+    	    print ("Cant open file temperature.txt for writing")
+        logging.exception ("Cant open file temperature.txt for writing")
 
 def read_measured_temp_from_file ():
     temp = '0'
@@ -242,7 +245,9 @@ def read_measured_temp_from_file ():
         f.close ()
     except IOError:
         if my_fire.debug_level >=2:
-    	    print ("Cant open file temperature.txt")
+    	    print ("Cant open file measured_temperature.txt for reading")
+        logging.exception ("Cant open file measured_temperature.txt for reading")
+ 
 
     return temp
 
@@ -252,12 +257,12 @@ def write_measured_temp_to_file (temp):
     try:
         f = open ('/tmp/measured_temperature.txt','wt')
         f.write ('{0:0.1f}'.format(temp))
-        #print 'Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity)
         f.close ()
     except IOError:
         if my_fire.debug_level >= 2:
-            print ("Cant open file")
-    		
+            print ("Cant open file measured_temperature.txt for writing")
+        logging.exception ("Cant open file measured_temperature.txt for writing")
+		
 
 # Higher level functions to move the temperature data between threads. Currently
 # we are using temporary files, this may change.
@@ -385,5 +390,5 @@ while True:
   
     control_temperature (my_fire.desired_temp_get(), my_fire.measured_temp_get()) 
 
-    time.sleep(2)
+    time.sleep(1)
     
