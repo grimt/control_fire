@@ -118,24 +118,24 @@ def run_temp_hysteresis (desired, actual):
     try:    
         if desired == 18:
             if my_fire.fire_state == OFF:
-                if float(actual) <= float(17.0):
+                if float(actual) <= 17.0:
                     switch_fire (ON)
             else:
-                if float(actual) >= float(18.5):
+                if float(actual) >= 18.5:
                     switch_fire (OFF)
         elif desired == 19:
             if my_fire.fire_state == OFF:
-                if float(actual) <= float(18.0):
+                if float(actual) <= 18.0:
                     switch_fire (ON)
             else:
-                if float(actual) >= float(19.5):
+                if float(actual) >= 19.5:
                     switch_fire (OFF)
         elif desired == 20:
             if my_fire.fire_state == OFF:
-                if float(actual) <= float(19.0):
+                if float(actual) <= 19.0:
                     switch_fire (ON)
             else:
-                if float(actual) >= float(20.5):
+                if float(actual) >= 20.5:
                     switch_fire (OFF)
     except ValueError:
         print ('ValueError exception: ' + actual)
