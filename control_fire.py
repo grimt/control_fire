@@ -138,8 +138,8 @@ def run_temp_hysteresis (desired, actual):
                 if float(actual) >= float(20.5):
                     switch_fire (OFF)
     except ValueError:
-        print ('ValueError exception: ')
-        logging.exception ('ValueError exception')
+        print ('ValueError exception: ' + actual)
+        logging.exception ('ValueError exception' + actual)
 
 def control_temperature (desired, actual):
     # The first two checks are for override from the
@@ -238,7 +238,7 @@ def write_desired_temp_to_file (key):
         logging.exception ("Cant open file temperature.txt for writing")
 
 def read_measured_temp_from_file ():
-    temp = '0'
+    temp = my_fire.measured_temp_get() 
     try:
         f = open ('/tmp/measured_temperature.txt','rt')
         temp = f.read ()
@@ -326,6 +326,7 @@ def read_temp (debug_on, read_temperature_evt):
         else:
             if debug_on > 5:
                 print 'Failed to get reading. Try again!'
+            logging.info('Failed to read temp')
             time.sleep(2)
 
 #---------------------------------------------------------------------------------
