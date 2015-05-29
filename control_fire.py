@@ -3,6 +3,7 @@
 # modules to read from the flirc
 from evdev import InputDevice, categorize, ecodes
 from threading import Thread, Event
+from queue import Queue
 import Adafruit_DHT
 import RPi.GPIO as GPIO
 
@@ -270,6 +271,7 @@ def write_measured_temp_to_file (temp):
 def update_desired_temp (key_press):
     switch_on_desired_temp_led (key_press)
     #write_desired_temp_to_file (key_press)
+    remote_read_q.put(key_press)
 
 def update_measured_temp (temp):
     switch_on_measured_temp_led (temp)
@@ -280,10 +282,9 @@ def read_measured_temp():
 
 def read_desired_temp():
     #return (read_desired_temp_from_file ())
-   
+    return (read_remote_q.get())
 
-
-def read_remote (debug_on, read_remote_evt):
+def read_remote (debug_on, read_remote_evt, out_q):
     read_remote_evt.set()
     dev = InputDevice ('/dev/input/event0')
     if debug_on >= 5:
@@ -355,9 +356,12 @@ logging.info('Start logging')
 read_temperature_evt = Event()
 read_remote_evt = Event()
 
+read_remote_q = Queue()
+
 if my_fire.debug_level >=5:
     print('Launching read_remote')
-t = Thread(target=read_remote, args=(my_fire.debug_level,read_remote_evt))
+t = Thread(target=read_remote, args=(my_fire.debug_level,read_remote_evt, read_remote_q))
+
 t.start()
 
 if my_fire.debug_level >=5:
