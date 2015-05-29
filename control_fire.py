@@ -3,7 +3,7 @@
 # modules to read from the flirc
 from evdev import InputDevice, categorize, ecodes
 from threading import Thread, Event
-# from queue import Queue
+from Queue import Queue
 import Adafruit_DHT
 import RPi.GPIO as GPIO
 
