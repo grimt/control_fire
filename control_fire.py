@@ -321,6 +321,7 @@ def read_temp (debug_on, read_temperature_evt):
         if humidity is not None and temperature is not None:
             if debug_on > 5:
                 print 'Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity)
+            logging.info ('Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity))
             temperature = temperature - TEMPERATURE_OFFSET
             update_measured_temp (temperature)
             time.sleep(10)
