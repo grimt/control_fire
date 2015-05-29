@@ -265,21 +265,21 @@ def write_measured_temp_to_file (temp):
 		
 
 # Higher level functions to move the temperature data between threads. Currently
-# we are using temporary files, this may change.
+# Try using queues to move the data 
 
 def update_desired_temp (key_press):
     switch_on_desired_temp_led (key_press)
-    write_desired_temp_to_file (key_press)
+    #write_desired_temp_to_file (key_press)
 
 def update_measured_temp (temp):
     switch_on_measured_temp_led (temp)
-    write_measured_temp_to_file (temp)
+    #write_measured_temp_to_file (temp)
 
 def read_measured_temp():
-    return read_measured_temp_from_file()
+    #return read_measured_temp_from_file()
 
 def read_desired_temp():
-    return (read_desired_temp_from_file ())
+    #return (read_desired_temp_from_file ())
    
 
 
