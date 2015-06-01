@@ -238,6 +238,8 @@ def write_desired_temp_to_file (key):
         desired_temperature = 20
     elif key == REMOTE_KEY_BLUE:
         desired_temperature = 21
+    elif key == REMOTE_KEY_NONE:
+        desired_temperature = 0
 
     try:
         f = open ('/tmp/temperature.txt','wt')
@@ -351,7 +353,7 @@ init_GPIO ()
 # Instantiate the main class
 my_fire = Fire ()
 
-my_fire.desired_temp_set (0)
+update_desired_temp (REMOTE_KEY_NONE)
 switch_fire(OFF)
 
 # Set the debug level
@@ -361,7 +363,7 @@ my_fire.print_debug_state ()
 
 # start logging
 logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/control_fire.log',level=logging.DEBUG)
-
+print ('start logging')
 logging.info('Start logging')
 
 # Create and lanch the two threads
@@ -416,6 +418,7 @@ try:
         time.sleep(1)
 except:
     # switch off all LEDs
-    switch_on_desired_temp_led(REMOTE_KEY_NONE)
+    update_desired_temp(REMOTE_KEY_NONE)
     switch_on_measured_temp_led(0)
+    switch_fire(OFF)
     print ('DONE!!!')
