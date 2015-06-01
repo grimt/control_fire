@@ -23,6 +23,7 @@ DEBUG_LEVEL_2 = 2
 DEBUG_LEVEL_6 = 6
 
 # Key definitions
+REMOTE_KEY_NONE = 0
 REMOTE_KEY_RED = 2
 REMOTE_KEY_GREEN = 3
 REMOTE_KEY_YELLOW = 4
@@ -122,22 +123,31 @@ def run_temp_hysteresis (desired, actual):
                 if float(actual) <= 17.0:
                     switch_fire (ON)
             else:
-                if float(actual) >= 18.5:
+                if float(actual) >= 19:
                     switch_fire (OFF)
         elif desired == 19:
             if my_fire.fire_state == OFF:
                 if float(actual) <= 18.0:
                     switch_fire (ON)
             else:
-                if float(actual) >= 19.5:
+                if float(actual) >= 20:
                     switch_fire (OFF)
         elif desired == 20:
             if my_fire.fire_state == OFF:
                 if float(actual) <= 19.0:
                     switch_fire (ON)
             else:
-                if float(actual) >= 20.5:
+                if float(actual) >= 21:
                     switch_fire (OFF)
+        elif desired == 21:
+            if my_fire.fire_state == OFF:
+                if float(actual) <= 20.0:
+                    switch_fire (ON)
+            else:
+                if float(actual) >= 22:
+                    switch_fire (OFF)
+
+
     except ValueError:
         print ('ValueError exception: ' + actual)
         logging.exception ('ValueError exception' + actual)
@@ -180,13 +190,13 @@ def switch_on_measured_temp_led (temp):
     GPIO.output (OUT_MEASURED_TEMP_YELLOW_LED, False)
     GPIO.output (OUT_MEASURED_TEMP_BLUE_LED, False)
 
-    if temp >= 16 and temp <18:
+    if temp >= 17 and temp <19:
         GPIO.output (OUT_MEASURED_TEMP_RED_LED, True) 
-    elif temp >= 18 and temp < 19:
-       GPIO.output (OUT_MEASURED_TEMP_GREEN_LED, True) 
     elif temp >= 19 and temp < 20:
+       GPIO.output (OUT_MEASURED_TEMP_GREEN_LED, True) 
+    elif temp >= 20 and temp < 21:
         GPIO.output (OUT_MEASURED_TEMP_YELLOW_LED, True)
-    elif temp >= 20:
+    elif temp >= 21:
         GPIO.output (OUT_MEASURED_TEMP_BLUE_LED, True)
 
 
@@ -223,11 +233,11 @@ def write_desired_temp_to_file (key):
             desired_temperature = 0
     
     elif key == REMOTE_KEY_GREEN:
-        desired_temperature = 18
-    elif key == REMOTE_KEY_YELLOW:
         desired_temperature = 19
-    elif key == REMOTE_KEY_BLUE:
+    elif key == REMOTE_KEY_YELLOW:
         desired_temperature = 20
+    elif key == REMOTE_KEY_BLUE:
+        desired_temperature = 21
 
     try:
         f = open ('/tmp/temperature.txt','wt')
@@ -405,4 +415,7 @@ try:
 
         time.sleep(1)
 except:
+    # switch off all LEDs
+    switch_on_desired_temp_led(REMOTE_KEY_NONE)
+    switch_on_measured_temp_led(0)
     print ('DONE!!!')
