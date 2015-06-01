@@ -342,6 +342,7 @@ init_GPIO ()
 my_fire = Fire ()
 
 my_fire.desired_temp_set (0)
+switch_fire(OFF)
 
 # Set the debug level
 my_fire.debug_level_set(DEBUG_LEVEL_2)
@@ -361,14 +362,19 @@ read_remote_evt = Event()
 
 if my_fire.debug_level >=5:
     print('Launching read_remote')
-t = Thread(target=read_remote, args=(my_fire.debug_level,read_remote_evt ))
 
-t.start()
+t1 = Thread(target=read_remote, args=(my_fire.debug_level,read_remote_evt ))
+t1.daemon = True
+
+t1.start()
 
 if my_fire.debug_level >=5:
     print('Launching read_temperature')
-t = Thread(target=read_temp, args=(my_fire.debug_level,read_temperature_evt))
-t.start()
+
+t2 = Thread(target=read_temp, args=(my_fire.debug_level,read_temperature_evt))
+t2.daemon = True
+
+t2.start()
 
 
 # Wait for the threads to start
@@ -378,23 +384,25 @@ read_temperature_evt.wait()
 
 # Infinite loop reading data from the other threads and running the
 # control algorithm.
-while True:
+try:
+    while True:
 
-    temp = read_desired_temp ()
-    my_fire.desired_temp_set  (int(temp))
+        temp = read_desired_temp ()
+        my_fire.desired_temp_set  (int(temp))
   
-    if my_fire.debug_level >= 2:
-        print ('Desired: ' + str (my_fire.desired_temp_get()))
+        if my_fire.debug_level >= 2:
+             print ('Desired: ' + str (my_fire.desired_temp_get()))
 	 
     
-    temp = read_measured_temp ()
-    my_fire.measured_temp_set (temp)
+        temp = read_measured_temp ()
+        my_fire.measured_temp_set (temp)
 
-    if my_fire.debug_level >= 2:
-        print ('Measured: ' + str (my_fire.measured_temp_get()))
-        print ('State: ' + str(my_fire.fire_state))
+        if my_fire.debug_level >= 2:
+            print ('Measured: ' + str (my_fire.measured_temp_get()))
+            print ('State: ' + str(my_fire.fire_state))
   
-    control_temperature (my_fire.desired_temp_get(), my_fire.measured_temp_get()) 
+        control_temperature (my_fire.desired_temp_get(), my_fire.measured_temp_get()) 
 
-    time.sleep(1)
-    
+        time.sleep(1)
+except:
+    print ('DONE!!!')
