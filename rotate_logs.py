@@ -3,7 +3,7 @@
 import logging
 import logging.handlers
 
-LOG_FILENAME = '/tmp/log/logging_rotatingfile_example.out'
+LOG_FILENAME = '/var/log/logging_rotatingfile_example.out'
 
 # Set up a specific logger with our desired output level
 my_logger = logging.getLogger('MyLogger')

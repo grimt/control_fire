@@ -13,6 +13,21 @@ import time
 import logging
 import logging.handlers
 
+LOG_FILENAME = '/var/log/control_fire.log'
+ 
+# Set up a specific logger with our desired output level
+my_logger = logging.getLogger('MyLogger')
+my_logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s  %(message)s')
+ 
+# Add the log message handler to the logger
+handler = logging.handlers.RotatingFileHandler( LOG_FILENAME, maxBytes=20000, backupCount=5)  
+handler.setFormatter(formatter)
+
+my_logger.addHandler(handler)
+
+my_logger.debug ('Start logging')
+#
 ON = True
 OFF = False
 TEMPERATURE_OFFSET = 2 # Account for temp sensor being close  to the fire
@@ -104,13 +119,13 @@ def switch_fire (off_or_on):
         my_fire.fire_state = ON
         if my_fire.debug_level >=1:
     	    print ("Fire is ON")
-        logging.info('Fire is ON')
+        my_logger.debug('Fire is ON')
     else:
         GPIO.output (OUT_RELAY_PIN, False)
         my_fire.fire_state = OFF
         if my_fire.debug_level >=1:
     	    print ("Fire is OFF")
-        logging.info('Fire is OFF')
+        my_logger.debug('Fire is OFF')
  
 
 
@@ -150,7 +165,7 @@ def run_temp_hysteresis (desired, actual):
 
     except ValueError:
         print ('ValueError exception: ' + actual)
-        logging.exception ('ValueError exception' + actual)
+        my_logger.exception ('ValueError exception' + actual)
 
 def control_temperature (desired, actual):
     # The first two checks are for override from the
@@ -212,7 +227,7 @@ def read_desired_temp_from_file():
     except IOError:
         if my_fire.debug_level >=2:
             print ("Cant open file temperature.txt for reading")
-        logging.exception("Cant open file temperature.txt for reading")
+        my_logger.exception("Cant open file temperature.txt for reading")
 
     return temp
 
@@ -225,7 +240,7 @@ def write_desired_temp_to_file (key):
         # off = 0
         # To Toggle the temperature we must first read it from the file.
         desired_temperature = 0
-        temp = read_desired_temp_from_file ()
+        temp = read_desired_temp ()
         desired_temperature = int (temp)
         if desired_temperature == 0:
             desired_temperature = 999
@@ -248,7 +263,7 @@ def write_desired_temp_to_file (key):
     except IOError:
         if my_fire.debug_level >= 2:
     	    print ("Cant open file temperature.txt for writing")
-        logging.exception ("Cant open file temperature.txt for writing")
+        my_logger.exception ("Cant open file temperature.txt for writing")
 
 def read_measured_temp_from_file ():
     temp = my_fire.measured_temp_get() 
@@ -259,7 +274,7 @@ def read_measured_temp_from_file ():
     except IOError:
         if my_fire.debug_level >=2:
     	    print ("Cant open file measured_temperature.txt for reading")
-        logging.exception ("Cant open file measured_temperature.txt for reading")
+        my_logger.exception ("Cant open file measured_temperature.txt for reading")
  
 
     return temp
@@ -274,7 +289,7 @@ def write_measured_temp_to_file (temp):
     except IOError:
         if my_fire.debug_level >= 2:
             print ("Cant open file measured_temperature.txt for writing")
-        logging.exception ("Cant open file measured_temperature.txt for writing")
+        my_logger.exception ("Cant open file measured_temperature.txt for writing")
 		
 
 # Higher level functions to move the temperature data between threads. Currently
@@ -333,14 +348,14 @@ def read_temp (debug_on, read_temperature_evt):
         if humidity is not None and temperature is not None:
             if debug_on > 5:
                 print 'Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity)
-            logging.info ('Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity))
+            my_logger.info ('Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity))
             temperature = temperature - TEMPERATURE_OFFSET
             update_measured_temp (temperature)
             time.sleep(10)
         else:
             if debug_on > 5:
                 print 'Failed to get reading. Try again!'
-            logging.info('Failed to read temp')
+            my_logger.info('Failed to read temp')
             time.sleep(2)
 
 #---------------------------------------------------------------------------------
@@ -362,9 +377,9 @@ my_fire.debug_level_set(DEBUG_LEVEL_2)
 my_fire.print_debug_state ()
 
 # start logging
-logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/control_fire.log',level=logging.DEBUG)
-print ('start logging')
-logging.info('Start logging')
+#logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/control_fire.log',level=logging.DEBUG)
+#print ('start logging')
+#logging.info('Start logging')
 
 # Create and lanch the two threads
 read_temperature_evt = Event()
