@@ -365,23 +365,27 @@ def read_temp (debug_on, read_temperature_evt):
     else:
         return start <= x or x <= end
         
-def check_time:
+def check_time (debug_on, check_time_evt):
 	# The fire should be switched off unless it is between 4pm and 10pm
 	# This task will check the time at half hour intervals and switch the
 	# fire off unless the time is within the range specified above.
 	# Note the fire can be switched on again by the remote but it will
 	# be switched off again in the next half hour
+	
+	check_time_evt.set()
+	
+	while True:
 
-	localtime = time.localtime(time.time())
-	start = datetime.time(16, 0, 0) # 4pm
-	end = datetime.time(22, 0, 0) # 10pm
+		localtime = datetime.datetime.time(datetime.datetime.now())
+		start = datetime.time(16, 0, 0) # 4pm
+		end = datetime.time(22, 0, 0) # 10pm
 	
-	if !(time_in_range (start, end, localtime)):
-		# switch the fire off
-		update_desired_temp (REMOTE_KEY_NONE)
-		switch_fire(OFF)	
+		if not (time_in_range (start, end, localtime)):
+			# switch the fire off
+			update_desired_temp (REMOTE_KEY_NONE)
+			switch_fire(OFF)	
 	
-	time.sleep (60 * 30) # check again in 30 minutes
+		time.sleep (60 * 30) # check again in 30 minutes
 
 #---------------------------------------------------------------------------------
 
