@@ -439,6 +439,7 @@ t3.start()
 
 
 # Wait for the threads to start
+# TODo - remote the events as we don't need them
 read_remote_evt.wait()
 read_temperature_evt.wait()
 check_time_evt.wait()
