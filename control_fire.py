@@ -375,13 +375,14 @@ def check_time (debug_on, check_time_evt):
 	check_time_evt.set()
 	
 	while True:
-
+		# TODO - only switch off, if on
 		localtime = datetime.datetime.time(datetime.datetime.now())
 		start = datetime.time(16, 0, 0) # 4pm
 		end = datetime.time(22, 0, 0) # 10pm
 	
 		if not (time_in_range (start, end, localtime)):
 			# switch the fire off
+			my_logger.debug ('Switch fire OFF as outside time range')
 			update_desired_temp (REMOTE_KEY_NONE)
 			switch_fire(OFF)	
 	
@@ -404,11 +405,6 @@ switch_fire(OFF)
 my_fire.debug_level_set(DEBUG_LEVEL_2)
 
 my_fire.print_debug_state ()
-
-# start logging
-#logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/control_fire.log',level=logging.DEBUG)
-#print ('start logging')
-#logging.info('Start logging')
 
 # Create and lanch the two threads
 read_temperature_evt = Event()
