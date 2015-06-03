@@ -358,6 +358,31 @@ def read_temp (debug_on, read_temperature_evt):
             my_logger.info('Failed to read temp')
             time.sleep(2)
 
+  def time_in_range(start, end, x):
+    """Return true if x is in the range [start, end]"""
+    if start <= end:
+        return start <= x <= end
+    else:
+        return start <= x or x <= end
+        
+def check_time:
+	# The fire should be switched off unless it is between 4pm and 10pm
+	# This task will check the time at half hour intervals and switch the
+	# fire off unless the time is within the range specified above.
+	# Note the fire can be switched on again by the remote but it will
+	# be switched off again in the next half hour
+
+	localtime = time.localtime(time.time())
+	start = datetime.time(16, 0, 0) # 4pm
+	end = datetime.time(22, 0, 0) # 10pm
+	
+	if !(time_in_range (start, end, localtime)):
+		# switch the fire off
+		update_desired_temp (REMOTE_KEY_NONE)
+		switch_fire(OFF)	
+	
+	time.sleep (60 * 30) # check again in 30 minutes
+
 #---------------------------------------------------------------------------------
 
 # Main thread:
@@ -384,6 +409,7 @@ my_fire.print_debug_state ()
 # Create and lanch the two threads
 read_temperature_evt = Event()
 read_remote_evt = Event()
+check_time_evt = Event()
 
 # read_remote_q = Queue()
 
@@ -403,10 +429,19 @@ t2.daemon = True
 
 t2.start()
 
+if my_fire.debug_level >=5:
+    print('Check time')
+    
+t3 = Thread(target=check_time, args=(my_fire.debug_level,check_time_evt))
+t3.daemon = True
+
+t3.start()
+
 
 # Wait for the threads to start
 read_remote_evt.wait()
 read_temperature_evt.wait()
+check_time_evt.wait()
 
 
 # Infinite loop reading data from the other threads and running the
@@ -431,6 +466,7 @@ try:
         control_temperature (my_fire.desired_temp_get(), my_fire.measured_temp_get()) 
 
         time.sleep(1)
+# TODO - make this exception more specific
 except:
     # switch off all LEDs
     update_desired_temp(REMOTE_KEY_NONE)
