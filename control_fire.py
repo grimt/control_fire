@@ -3,16 +3,32 @@
 # modules to read from the flirc
 from evdev import InputDevice, categorize, ecodes
 from threading import Thread, Event
-from queue import Queue
+from Queue import Queue
 import Adafruit_DHT
 import RPi.GPIO as GPIO
 
 import sys
 import time
+import datetime 
 
 import logging
 import logging.handlers
 
+LOG_FILENAME = '/var/log/control_fire.log'
+ 
+# Set up a specific logger with our desired output level
+my_logger = logging.getLogger('MyLogger')
+my_logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s  %(message)s')
+ 
+# Add the log message handler to the logger
+handler = logging.handlers.RotatingFileHandler( LOG_FILENAME, maxBytes=20000, backupCount=5)  
+handler.setFormatter(formatter)
+
+my_logger.addHandler(handler)
+
+my_logger.debug ('Start logging')
+#
 ON = True
 OFF = False
 TEMPERATURE_OFFSET = 2 # Account for temp sensor being close  to the fire
@@ -23,6 +39,7 @@ DEBUG_LEVEL_2 = 2
 DEBUG_LEVEL_6 = 6
 
 # Key definitions
+REMOTE_KEY_NONE = 0
 REMOTE_KEY_RED = 2
 REMOTE_KEY_GREEN = 3
 REMOTE_KEY_YELLOW = 4
@@ -103,13 +120,13 @@ def switch_fire (off_or_on):
         my_fire.fire_state = ON
         if my_fire.debug_level >=1:
     	    print ("Fire is ON")
-        logging.info('Fire is ON')
+        my_logger.debug('Fire is ON')
     else:
         GPIO.output (OUT_RELAY_PIN, False)
         my_fire.fire_state = OFF
         if my_fire.debug_level >=1:
     	    print ("Fire is OFF")
-        logging.info('Fire is OFF')
+        my_logger.debug('Fire is OFF')
  
 
 
@@ -122,25 +139,34 @@ def run_temp_hysteresis (desired, actual):
                 if float(actual) <= 17.0:
                     switch_fire (ON)
             else:
-                if float(actual) >= 18.5:
+                if float(actual) >= 19:
                     switch_fire (OFF)
         elif desired == 19:
             if my_fire.fire_state == OFF:
                 if float(actual) <= 18.0:
                     switch_fire (ON)
             else:
-                if float(actual) >= 19.5:
+                if float(actual) >= 20:
                     switch_fire (OFF)
         elif desired == 20:
             if my_fire.fire_state == OFF:
                 if float(actual) <= 19.0:
                     switch_fire (ON)
             else:
-                if float(actual) >= 20.5:
+                if float(actual) >= 21:
                     switch_fire (OFF)
+        elif desired == 21:
+            if my_fire.fire_state == OFF:
+                if float(actual) <= 20.0:
+                    switch_fire (ON)
+            else:
+                if float(actual) >= 22:
+                    switch_fire (OFF)
+
+
     except ValueError:
         print ('ValueError exception: ' + actual)
-        logging.exception ('ValueError exception' + actual)
+        my_logger.exception ('ValueError exception' + actual)
 
 def control_temperature (desired, actual):
     # The first two checks are for override from the
@@ -180,13 +206,13 @@ def switch_on_measured_temp_led (temp):
     GPIO.output (OUT_MEASURED_TEMP_YELLOW_LED, False)
     GPIO.output (OUT_MEASURED_TEMP_BLUE_LED, False)
 
-    if temp >= 16 and temp <18:
+    if temp >= 17 and temp <19:
         GPIO.output (OUT_MEASURED_TEMP_RED_LED, True) 
-    elif temp >= 18 and temp < 19:
-       GPIO.output (OUT_MEASURED_TEMP_GREEN_LED, True) 
     elif temp >= 19 and temp < 20:
+       GPIO.output (OUT_MEASURED_TEMP_GREEN_LED, True) 
+    elif temp >= 20 and temp < 21:
         GPIO.output (OUT_MEASURED_TEMP_YELLOW_LED, True)
-    elif temp >= 20:
+    elif temp >= 21:
         GPIO.output (OUT_MEASURED_TEMP_BLUE_LED, True)
 
 
@@ -202,7 +228,7 @@ def read_desired_temp_from_file():
     except IOError:
         if my_fire.debug_level >=2:
             print ("Cant open file temperature.txt for reading")
-        logging.exception("Cant open file temperature.txt for reading")
+        my_logger.exception("Cant open file temperature.txt for reading")
 
     return temp
 
@@ -215,7 +241,7 @@ def write_desired_temp_to_file (key):
         # off = 0
         # To Toggle the temperature we must first read it from the file.
         desired_temperature = 0
-        temp = read_desired_temp_from_file ()
+        temp = read_desired_temp ()
         desired_temperature = int (temp)
         if desired_temperature == 0:
             desired_temperature = 999
@@ -223,11 +249,13 @@ def write_desired_temp_to_file (key):
             desired_temperature = 0
     
     elif key == REMOTE_KEY_GREEN:
-        desired_temperature = 18
-    elif key == REMOTE_KEY_YELLOW:
         desired_temperature = 19
-    elif key == REMOTE_KEY_BLUE:
+    elif key == REMOTE_KEY_YELLOW:
         desired_temperature = 20
+    elif key == REMOTE_KEY_BLUE:
+        desired_temperature = 21
+    elif key == REMOTE_KEY_NONE:
+        desired_temperature = 0
 
     try:
         f = open ('/tmp/temperature.txt','wt')
@@ -236,7 +264,7 @@ def write_desired_temp_to_file (key):
     except IOError:
         if my_fire.debug_level >= 2:
     	    print ("Cant open file temperature.txt for writing")
-        logging.exception ("Cant open file temperature.txt for writing")
+        my_logger.exception ("Cant open file temperature.txt for writing")
 
 def read_measured_temp_from_file ():
     temp = my_fire.measured_temp_get() 
@@ -247,7 +275,7 @@ def read_measured_temp_from_file ():
     except IOError:
         if my_fire.debug_level >=2:
     	    print ("Cant open file measured_temperature.txt for reading")
-        logging.exception ("Cant open file measured_temperature.txt for reading")
+        my_logger.exception ("Cant open file measured_temperature.txt for reading")
  
 
     return temp
@@ -262,7 +290,7 @@ def write_measured_temp_to_file (temp):
     except IOError:
         if my_fire.debug_level >= 2:
             print ("Cant open file measured_temperature.txt for writing")
-        logging.exception ("Cant open file measured_temperature.txt for writing")
+        my_logger.exception ("Cant open file measured_temperature.txt for writing")
 		
 
 # Higher level functions to move the temperature data between threads. Currently
@@ -270,22 +298,22 @@ def write_measured_temp_to_file (temp):
 
 def update_desired_temp (key_press):
     switch_on_desired_temp_led (key_press)
-    #write_desired_temp_to_file (key_press)
-    remote_read_q.put(key_press)
+    write_desired_temp_to_file (key_press)
+    # remote_read_q.put(key_press)
 
 def update_measured_temp (temp):
     switch_on_measured_temp_led (temp)
-    #write_measured_temp_to_file (temp)
+    write_measured_temp_to_file (temp)
 
 def read_measured_temp():
-    #return read_measured_temp_from_file()
+    return read_measured_temp_from_file()
 
 def read_desired_temp():
-    #return (read_desired_temp_from_file ())
-    return (read_remote_q.get())
+    return (read_desired_temp_from_file ())
+    #return (read_remote_q.get())
 
-def read_remote (debug_on, read_remote_evt, out_q):
-    read_remote_evt.set()
+def read_remote (debug_on):
+
     dev = InputDevice ('/dev/input/event0')
     if debug_on >= 5:
         print (dev)
@@ -306,10 +334,9 @@ def read_remote (debug_on, read_remote_evt, out_q):
 
 
 
-def read_temp (debug_on, read_temperature_evt):
+def read_temp (debug_on):
     # Read the temperature from the DHT22 temperature sensor.
     
-    read_temperature_evt.set()
     while True:
         humidity, temperature = Adafruit_DHT.read(DHT_22,IN_MEASURE_TEMP_PIN )
 
@@ -321,15 +348,46 @@ def read_temp (debug_on, read_temperature_evt):
         if humidity is not None and temperature is not None:
             if debug_on > 5:
                 print 'Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity)
+            my_logger.info ('Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity))
             temperature = temperature - TEMPERATURE_OFFSET
             update_measured_temp (temperature)
             time.sleep(10)
         else:
             if debug_on > 5:
                 print 'Failed to get reading. Try again!'
-            logging.info('Failed to read temp')
+            my_logger.info('Failed to read temp')
             time.sleep(2)
 
+def time_in_range(start, end, x):
+    """Return true if x is in the range [start, end]"""
+    if start <= end:
+        return start <= x <= end
+    else:
+        return start <= x or x <= end
+        
+def check_time (debug_on):
+	# The fire should be switched off unless it is between 4pm and 10pm
+	# This task will check the time at half hour intervals and switch the
+	# fire off unless the time is within the range specified above.
+	# Note the fire can be switched on again by the remote but it will
+	# be switched off again in the next half hour
+	
+	while True:
+            if my_fire.fire_state == ON: 
+	        localtime = datetime.datetime.time(datetime.datetime.now())
+	        start = datetime.time(16, 0, 0) # 4pm
+	        end = datetime.time(22, 0, 0) # 10pm
+	
+	        if not (time_in_range (start, end, localtime)):
+	            # switch the fire off
+                    my_logger.debug ('Switch fire OFF as outside time range, at: ' + str (localtime))
+                    if my_fire.debug_level >= 2:
+                        print('Switch fire OFF as outside time range at: ' + str(localtime))
+		    update_desired_temp (REMOTE_KEY_NONE)
+		    switch_fire(OFF)	
+	
+            time.sleep (60 * 15) # check again in 15 minutes
+	
 #---------------------------------------------------------------------------------
 
 # Main thread:
@@ -340,60 +398,69 @@ init_GPIO ()
 # Instantiate the main class
 my_fire = Fire ()
 
-my_fire.desired_temp_set (0)
+update_desired_temp (REMOTE_KEY_NONE)
+switch_fire(OFF)
 
 # Set the debug level
 my_fire.debug_level_set(DEBUG_LEVEL_2)
 
 my_fire.print_debug_state ()
 
-# start logging
-logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/control_fire.log',level=logging.DEBUG)
+# Create and lanch the threads
 
-logging.info('Start logging')
-
-# Create and lanch the two threads
-read_temperature_evt = Event()
-read_remote_evt = Event()
-
-read_remote_q = Queue()
+# read_remote_q = Queue()
 
 if my_fire.debug_level >=5:
     print('Launching read_remote')
-t = Thread(target=read_remote, args=(my_fire.debug_level,read_remote_evt, read_remote_q))
 
-t.start()
+t1 = Thread(target=read_remote, args=(my_fire.debug_level,))
+t1.daemon = True
+
+t1.start()
 
 if my_fire.debug_level >=5:
     print('Launching read_temperature')
-t = Thread(target=read_temp, args=(my_fire.debug_level,read_temperature_evt))
-t.start()
 
+t2 = Thread(target=read_temp, args=(my_fire.debug_level,))
+t2.daemon = True
 
-# Wait for the threads to start
-read_remote_evt.wait()
-read_temperature_evt.wait()
+t2.start()
+
+if my_fire.debug_level >=5:
+    print('Check time')
+    
+t3 = Thread(target=check_time, args=(my_fire.debug_level,))
+t3.daemon = True
+
+t3.start()
 
 
 # Infinite loop reading data from the other threads and running the
 # control algorithm.
-while True:
+try:
+    while True:
 
-    temp = read_desired_temp ()
-    my_fire.desired_temp_set  (int(temp))
+        temp = read_desired_temp ()
+        my_fire.desired_temp_set  (int(temp))
   
-    if my_fire.debug_level >= 2:
-        print ('Desired: ' + str (my_fire.desired_temp_get()))
+        if my_fire.debug_level >= 2:
+             print ('Desired: ' + str (my_fire.desired_temp_get()))
 	 
     
-    temp = read_measured_temp ()
-    my_fire.measured_temp_set (temp)
+        temp = read_measured_temp ()
+        my_fire.measured_temp_set (temp)
 
-    if my_fire.debug_level >= 2:
-        print ('Measured: ' + str (my_fire.measured_temp_get()))
-        print ('State: ' + str(my_fire.fire_state))
+        if my_fire.debug_level >= 2:
+            print ('Measured: ' + str (my_fire.measured_temp_get()))
+            print ('State: ' + str(my_fire.fire_state))
   
-    control_temperature (my_fire.desired_temp_get(), my_fire.measured_temp_get()) 
+        control_temperature (my_fire.desired_temp_get(), my_fire.measured_temp_get()) 
 
-    time.sleep(1)
-    
+        time.sleep(1)
+# TODO - make this exception more specific
+except:
+    # switch off all LEDs
+    update_desired_temp(REMOTE_KEY_NONE)
+    switch_on_measured_temp_led(0)
+    switch_fire(OFF)
+    print ('DONE!!!')
