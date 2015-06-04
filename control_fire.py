@@ -9,6 +9,7 @@ import RPi.GPIO as GPIO
 
 import sys
 import time
+import datetime 
 
 import logging
 import logging.handlers
@@ -358,7 +359,7 @@ def read_temp (debug_on, read_temperature_evt):
             my_logger.info('Failed to read temp')
             time.sleep(2)
 
-  def time_in_range(start, end, x):
+def time_in_range(start, end, x):
     """Return true if x is in the range [start, end]"""
     if start <= end:
         return start <= x <= end
@@ -375,19 +376,21 @@ def check_time (debug_on, check_time_evt):
 	check_time_evt.set()
 	
 	while True:
-		# TODO - only switch off, if on
-		localtime = datetime.datetime.time(datetime.datetime.now())
-		start = datetime.time(16, 0, 0) # 4pm
-		end = datetime.time(22, 0, 0) # 10pm
+            if my_fire.fire_state == ON: 
+	        localtime = datetime.datetime.time(datetime.datetime.now())
+	        start = datetime.time(16, 0, 0) # 4pm
+	        end = datetime.time(22, 0, 0) # 10pm
 	
-		if not (time_in_range (start, end, localtime)):
-			# switch the fire off
-			my_logger.debug ('Switch fire OFF as outside time range')
-			update_desired_temp (REMOTE_KEY_NONE)
-			switch_fire(OFF)	
+	        if not (time_in_range (start, end, localtime)):
+	            # switch the fire off
+                    my_logger.debug ('Switch fire OFF as outside time range, at: ' + str (localtime))
+                    if my_fire.debug_level >= 2:
+                        print('Switch fire OFF as outside time range at: ' + str(localtime))
+		    update_desired_temp (REMOTE_KEY_NONE)
+		    switch_fire(OFF)	
 	
-		time.sleep (60 * 30) # check again in 30 minutes
-
+            time.sleep (60 * 15) # check again in 15 minutes
+	
 #---------------------------------------------------------------------------------
 
 # Main thread:
