@@ -312,8 +312,8 @@ def read_desired_temp():
     return (read_desired_temp_from_file ())
     #return (read_remote_q.get())
 
-def read_remote (debug_on, read_remote_evt):
-    read_remote_evt.set()
+def read_remote (debug_on):
+
     dev = InputDevice ('/dev/input/event0')
     if debug_on >= 5:
         print (dev)
@@ -334,10 +334,9 @@ def read_remote (debug_on, read_remote_evt):
 
 
 
-def read_temp (debug_on, read_temperature_evt):
+def read_temp (debug_on):
     # Read the temperature from the DHT22 temperature sensor.
     
-    read_temperature_evt.set()
     while True:
         humidity, temperature = Adafruit_DHT.read(DHT_22,IN_MEASURE_TEMP_PIN )
 
@@ -366,14 +365,12 @@ def time_in_range(start, end, x):
     else:
         return start <= x or x <= end
         
-def check_time (debug_on, check_time_evt):
+def check_time (debug_on):
 	# The fire should be switched off unless it is between 4pm and 10pm
 	# This task will check the time at half hour intervals and switch the
 	# fire off unless the time is within the range specified above.
 	# Note the fire can be switched on again by the remote but it will
 	# be switched off again in the next half hour
-	
-	check_time_evt.set()
 	
 	while True:
             if my_fire.fire_state == ON: 
@@ -409,17 +406,14 @@ my_fire.debug_level_set(DEBUG_LEVEL_2)
 
 my_fire.print_debug_state ()
 
-# Create and lanch the two threads
-read_temperature_evt = Event()
-read_remote_evt = Event()
-check_time_evt = Event()
+# Create and lanch the threads
 
 # read_remote_q = Queue()
 
 if my_fire.debug_level >=5:
     print('Launching read_remote')
 
-t1 = Thread(target=read_remote, args=(my_fire.debug_level,read_remote_evt ))
+t1 = Thread(target=read_remote, args=(my_fire.debug_level,))
 t1.daemon = True
 
 t1.start()
@@ -427,7 +421,7 @@ t1.start()
 if my_fire.debug_level >=5:
     print('Launching read_temperature')
 
-t2 = Thread(target=read_temp, args=(my_fire.debug_level,read_temperature_evt))
+t2 = Thread(target=read_temp, args=(my_fire.debug_level,))
 t2.daemon = True
 
 t2.start()
@@ -435,17 +429,10 @@ t2.start()
 if my_fire.debug_level >=5:
     print('Check time')
     
-t3 = Thread(target=check_time, args=(my_fire.debug_level,check_time_evt))
+t3 = Thread(target=check_time, args=(my_fire.debug_level,))
 t3.daemon = True
 
 t3.start()
-
-
-# Wait for the threads to start
-# TODo - remote the events as we don't need them
-read_remote_evt.wait()
-read_temperature_evt.wait()
-check_time_evt.wait()
 
 
 # Infinite loop reading data from the other threads and running the
