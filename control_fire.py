@@ -458,7 +458,7 @@ try:
 
         time.sleep(1)
 # TODO - make this exception more specific
-except:
+except KeyboardInterrupt:
     # switch off all LEDs
     update_desired_temp(REMOTE_KEY_NONE)
     switch_on_measured_temp_led(0)
