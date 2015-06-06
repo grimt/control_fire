@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+	<head>
+		<title>{{ title }}</title>
+    	</head>
+
+       	<body>
+        	<h1>Hello, World!</h1>
+		<h2>The date and time on the server is: {{ time }}</h2>
+
+		<label style="font-size: 25pt" for=rtemp>Required Temperature</label>
+		<input style="height: 1px; width: 250px; font-size: 90pt" type=range id=rtemp min=10 value=20 max=30 step=1 oninput="outputUpdate(value)">
+		<output style="font-size: 25pt" for=rtemp id=temperature>20</output>
+		<script>
+
+			function outputUpdate(temp) {
+
+				document.querySelector('#temperature').value = temp;
+
+			}
+
+		</script>
+	</body>
+</html>

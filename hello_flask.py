@@ -1,10 +1,10 @@
-
+# sudo gunicorn hello_flask:app -p rocket.pid -b 192.168.1.151:80 -D
 from flask import Flask
 app = Flask(__name__)
 
+print (app)
+
 @app.route("/")
-def hello():
+def index():
     return "Hello World!"
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80, debug=True)
