@@ -1,9 +1,16 @@
 # Flask web interface app for fire controller
 
 # sudo gunicorn fire_web:app -p fire_web.pid -b 192.168.1.151:80 -D
+# sudo gunicorn fire_web:app -b 192.168.1.151:80 
 
 from flask import Flask, render_template
 import datetime
+
+
+
+
+
+
 
 def read_desired_temp_from_file():
     temp = 0
