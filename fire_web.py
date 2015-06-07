@@ -6,7 +6,14 @@
 from flask import Flask, render_template
 import datetime
 
+def write_desired_temp_to_file (temp):
 
+    try:
+        f = open ('/tmp/temperature.txt','wt')
+        f.write (str (temp))
+        f.close ()
+    except IOError:
+        print ('Could not write desired temperature to a file')
 
 
 
