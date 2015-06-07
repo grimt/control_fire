@@ -16,9 +16,6 @@ def write_desired_temp_to_file (temp):
         print ('Could not write desired temperature to a file')
 
 
-
-
-
 def read_desired_temp_from_file():
     temp = 0
     try:
@@ -28,7 +25,7 @@ def read_desired_temp_from_file():
     except IOError:
         temp = 0
     return temp
-
+    
 def read_measured_temp_from_file ():
     temp = 0 
     try:
@@ -38,6 +35,9 @@ def read_measured_temp_from_file ():
     except IOError:
                 temp = 0
     return temp
+
+def update_desired_temp (temp):
+    write_desired_temp_to_file (temp)
 
 def read_measured_temp():
     return read_measured_temp_from_file()
@@ -63,4 +63,5 @@ def index():
 @app.route("/submit/<int:temp>")
 def submit (temp):
     print('Here! ' + str(temp))
+    update_desired_temp (temp)
     return render_template ('main.html')
