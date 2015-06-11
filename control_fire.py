@@ -120,13 +120,11 @@ def switch_fire (off_or_on):
         my_fire.fire_state = ON
         if my_fire.debug_level >=1:
     	    print ("Fire is ON")
-        my_logger.debug('Fire is ON')
     else:
         GPIO.output (OUT_RELAY_PIN, False)
         my_fire.fire_state = OFF
         if my_fire.debug_level >=1:
     	    print ("Fire is OFF")
-        my_logger.debug('Fire is OFF')
  
 
 
@@ -134,39 +132,17 @@ def run_temp_hysteresis (desired, actual):
     if my_fire.debug_level >= 2:
         print ('Hysteresis: current state: ' + str (my_fire.fire_state) + ' desired: ' + str (desired) + ' actual: ' + str (actual))
     try:    
-        if desired == 18:
-            if my_fire.fire_state == OFF:
-                if float(actual) <= 17.0:
-                    switch_fire (ON)
-            else:
-                if float(actual) >= 19:
-                    switch_fire (OFF)
-        elif desired == 19:
-            if my_fire.fire_state == OFF:
-                if float(actual) <= 18.0:
-                    switch_fire (ON)
-            else:
-                if float(actual) >= 20:
-                    switch_fire (OFF)
-        elif desired == 20:
-            if my_fire.fire_state == OFF:
-                if float(actual) <= 19.0:
-                    switch_fire (ON)
-            else:
-                if float(actual) >= 21:
-                    switch_fire (OFF)
-        elif desired == 21:
-            if my_fire.fire_state == OFF:
-                if float(actual) <= 20.0:
-                    switch_fire (ON)
-            else:
-                if float(actual) >= 22:
-                    switch_fire (OFF)
-
-
+        if my_fire.fire_state == OFF:
+            if float(actual) <= (desired - 1):
+                switch_fire (ON)
+                my_logger.debug ('Switch fire ON Desired: ' + str (desired) + ' Actual: ' + str (actual))
+        else:
+            if float (actual) >= (desired + 1):
+                switch_fire (OFF)
+                my_logger.debug ('Switch fire OFF Desired: ' + str (desired) + ' Actual: ' + str (actual))
     except ValueError:
-        print ('ValueError exception: ' + actual)
-        my_logger.exception ('ValueError exception' + actual)
+        print ('ValueError exception: ' + str (actual))
+        my_logger.exception ('ValueError exception' + str (actual))
 
 def control_temperature (desired, actual):
     # The first two checks are for override from the
@@ -174,9 +150,11 @@ def control_temperature (desired, actual):
     if desired == 0:
         if my_fire.fire_state == ON:
             switch_fire (OFF)
+            my_logger.debug ('Switch fire OFF Desired: ' + str (desired) + ' Actual: ' + str (actual))
     elif desired == 999:
         if my_fire.fire_state == OFF:
             switch_fire (ON)
+            my_logger.debug ('Switch fire ON Desired: ' + str (desired) + ' Actual: ' + str (actual))
     else:
         run_temp_hysteresis (desired, actual) 
 
@@ -348,14 +326,14 @@ def read_temp (debug_on):
         if humidity is not None and temperature is not None:
             if debug_on > 5:
                 print 'Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity)
-            my_logger.info ('Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity))
+            #my_logger.info ('Temp={0:0.1f}*C  Humidity={1:0.1f}%'.format(temperature, humidity))
             temperature = temperature - TEMPERATURE_OFFSET
             update_measured_temp (temperature)
             time.sleep(10)
         else:
             if debug_on > 5:
                 print 'Failed to get reading. Try again!'
-            my_logger.info('Failed to read temp')
+            #my_logger.info('Failed to read temp')
             time.sleep(2)
 
 def time_in_range(start, end, x):
@@ -400,7 +378,7 @@ my_fire = Fire ()
 
 update_desired_temp (REMOTE_KEY_NONE)
 switch_fire(OFF)
-
+my_logger.debug ('Switch fire OFF Initial condition ')
 # Set the debug level
 my_fire.debug_level_set(DEBUG_LEVEL_2)
 
@@ -463,4 +441,5 @@ except KeyboardInterrupt:
     update_desired_temp(REMOTE_KEY_NONE)
     switch_on_measured_temp_led(0)
     switch_fire(OFF)
+    my_logger.debug ('Switch fire OFF Program Terminates')
     print ('DONE!!!')
