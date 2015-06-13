@@ -10,21 +10,28 @@
  
 
 	<label style="font-size: 25pt" for=dtemp>Desired Temperature</label>
-	<input style="height: 1px; width: 250px; font-size: 90pt" type=range id=dtemp min=0 value=dtemp max=30 step=1 oninput="outputUpdate(value)">
+	<input style="height: 1px; width: 250px; font-size: 90pt" type=range id=dtemp min=0 value={{ dtemp }} max=30 step=1 oninput="outputUpdate(value)">
 	<output style="font-size: 25pt" for=dtemp id=temperature>{{dtemp}}</output> 
 	<input type="button"  name="submit" value="Update" onclick="tempUpdate()">
 	<script>
             var gTemp = 0;
 	    function outputUpdate(temp) {
-
+                    console.log('yowza');
 		    document.querySelector('#temperature').value = temp;
 		    gTemp = temp;
 	    }
+	    function backToMainPage () {
+		    console.log('Back to main page');
+		    window.history.back(); 
+		}
+
 	    function tempUpdate()  {
 		    var n = gTemp.toString();
 		    var str1 = '/submit/';
 		    var str2 = str1.concat(n);
-                window.location=str2;
+		    console.log('here1');
+		    window.location=str2;
+		    console.log('here2');
 	}
 
 

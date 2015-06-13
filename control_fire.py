@@ -142,7 +142,7 @@ def run_temp_hysteresis (desired, actual):
                 my_logger.debug ('Switch fire OFF Desired: ' + str (desired) + ' Actual: ' + str (actual))
     except ValueError:
         print ('ValueError exception: ' + str (actual))
-        my_logger.exception ('ValueError exception' + str (actual))
+        #my_logger.exception ('ValueError exception' + str (actual))
 
 def control_temperature (desired, actual):
     # The first two checks are for override from the

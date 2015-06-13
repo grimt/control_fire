@@ -62,6 +62,14 @@ def index():
           
 @app.route("/submit/<int:temp>")
 def submit (temp):
-    print('Here! ' + str(temp))
     update_desired_temp (temp)
-    return render_template ('main.html')
+    mtemp = read_measured_temp()
+    templateData = {
+        'title' : 'Fire!',
+        'dtemp': str(temp),
+        'mtemp': str(mtemp)
+        }
+    return render_template('main.html', **templateData)
+    
+#if __name__ == "__main__":
+    #app.run(host='0.0.0.0', port=80, debug=True)
