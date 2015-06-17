@@ -118,11 +118,13 @@ def switch_fire (off_or_on):
     if off_or_on == ON:
         GPIO.output (OUT_RELAY_PIN, True)
         my_fire.fire_state = ON
+        update_fire_status (ON)
         if my_fire.debug_level >=1:
     	    print ("Fire is ON")
     else:
         GPIO.output (OUT_RELAY_PIN, False)
         my_fire.fire_state = OFF
+        update_fire_status (OFF)
         if my_fire.debug_level >=1:
     	    print ("Fire is OFF")
  
@@ -196,6 +198,22 @@ def switch_on_measured_temp_led (temp):
 
 # Functions to move date between threads using temporary  files.
 # This mechanism may change
+
+def write_fire_status_to_file (state):
+    try:
+        f = open ('/tmp/fire_status.txt', 'wt')
+        if state == ON:
+            f.write ('ON')
+        else:
+            f.write ('OFF')
+        f.close ()
+
+    except IOError:
+        if my_fire.debug_level >= 2:
+    	    print ("Cant open file fire_status.txt for writing")
+        my_logger.exception ("Cant open file fire_status.txt for writing")
+
+
 
 def read_desired_temp_from_file():
     temp = 0
@@ -273,6 +291,9 @@ def write_measured_temp_to_file (temp):
 
 # Higher level functions to move the temperature data between threads. Currently
 # Try using queues to move the data 
+
+def update_fire_status (state):
+    write_fire_status_to_file (state)
 
 def update_desired_temp (key_press):
     switch_on_desired_temp_led (key_press)

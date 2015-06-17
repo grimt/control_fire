@@ -36,6 +36,15 @@ def read_measured_temp_from_file ():
                 temp = 0
     return temp
 
+def read_fire_status_from_file ():
+    try:
+        f = open ('/tmp/fire_status.txt', 'rt')
+        status = f.read ()
+        f.close ()
+    except IOError:
+        status = 'Error'
+    return status
+
 def update_desired_temp (temp):
     write_desired_temp_to_file (temp)
 
@@ -45,15 +54,20 @@ def read_measured_temp():
 def read_desired_temp():
     return (read_desired_temp_from_file ())
 
+def read_fire_status():
+    return read_fire_status_from_file ()
+
 app = Flask(__name__)
 
 @app.route("/")
 @app.route("/index")
 def index():
+    status = read_fire_status()
     dtemp = read_desired_temp()
     mtemp = read_measured_temp()
     templateData = {
         'title' : 'Fire!',
+        'status': status,
         'dtemp': str(dtemp),
         'mtemp': str(mtemp)
         }
@@ -62,10 +76,12 @@ def index():
           
 @app.route("/submit/<int:temp>")
 def submit (temp):
+    status = read_fire_status()
     update_desired_temp (temp)
     mtemp = read_measured_temp()
     templateData = {
         'title' : 'Fire!',
+        'status' : status,
         'dtemp': str(temp),
         'mtemp': str(mtemp)
         }

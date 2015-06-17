@@ -1,18 +1,30 @@
 <!DOCTYPE html>
+    <link href="../static/fire_style_sheet.css" media="screen" rel="stylesheet" type="text/css" />
     <head>
         <title>{{ title }}</title>
     </head>
 
     <body>
-        <h1>GT's Fire:!</h1>
-	<h2>Desired temperature is: {{ dtemp }}</h2>
-        <h2>Measured temperature is: {{ mtemp }}</h2>
- 
+        <div>
+          <h1>GT's Fire:!</h1>
+          <h2>Fire is currently: {{ status }} </h2>
+	  <h2>Measured temperature is: {{ mtemp }}</h2>
+	</div>
 
-	<label style="font-size: 25pt" for=dtemp>Desired Temperature</label>
-	<input style="height: 1px; width: 250px; font-size: 90pt" type=range id=dtemp min=0 value={{ dtemp }} max=30 step=1 oninput="outputUpdate(value)">
-	<output style="font-size: 25pt" for=dtemp id=temperature>{{dtemp}}</output> 
-	<input type="button"  name="submit" value="Update" onclick="tempUpdate()">
+        <div> 
+	  <label style="font-size: 25pt" for=dtemp>Desired Temperature : </label>
+	  <output style="font-size: 25pt" for=dtemp id=temperature>{{dtemp}}</output>
+        </div>
+
+	<div>
+	  <input class="slider" type=range id=dtemp min=0 value={{ dtemp }} max=30 step=1 oninput="outputUpdate(value)">
+	  <input type="button"  name="submit" value="Update" onclick="tempUpdate()">
+        </div>
+
+        <input class="OnOffButton" type="image" src="../static/off2.png" alt="Switch Off" title="Switch fire off" onclick="offUpdate()">
+        <input class="OnOffButton" type="image" src="../static/on.png" alt="Switch On" title="Switch fire on" onclick="onUpdate()">
+
+ 
 	<script>
             var gTemp = 0;
 	    function outputUpdate(temp) {
@@ -20,19 +32,31 @@
 		    document.querySelector('#temperature').value = temp;
 		    gTemp = temp;
 	    }
-	    function backToMainPage () {
-		    console.log('Back to main page');
-		    window.history.back(); 
-		}
 
 	    function tempUpdate()  {
 		    var n = gTemp.toString();
 		    var str1 = '/submit/';
 		    var str2 = str1.concat(n);
-		    console.log('here1');
 		    window.location=str2;
-		    console.log('here2');
-	}
+	    }
+            function offUpdate()  {
+	    	    var n = gTemp.toString();
+		    var str1 = '/submit/';
+		    var str2 = str1.concat('0');
+		    window.location=str2;
+	    }
+                         
+            function onUpdate()  {
+	    	    var n = gTemp.toString();
+		    var str1 = '/submit/';
+		    var str2 = str1.concat('999');
+		    window.location=str2;
+	    }
+                         
+
+ 
+
+
 
 
 
