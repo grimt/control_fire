@@ -33,6 +33,12 @@ ON = True
 OFF = False
 TEMPERATURE_OFFSET = 2 # Account for temp sensor being close  to the fire
 
+# The relay can be sticky - i.e. wont switch on if it's been off for some time.
+# We keep a count of the number of seconds it has been off and toggle the
+# relay when switching on if it has been off for more than 5 hours.
+
+RELAY_TOGGLE_THRESHHOLD = 60 * 60 * 5 
+
 DEBUG_LEVEL_0 = 0 # Debug off
 DEBUG_LEVEL_1 = 1
 DEBUG_LEVEL_2 = 2
@@ -69,6 +75,7 @@ class Fire:
     debug_level = 0
     required_temperature = 0
     measured_temperature = 0
+    time_since_last_on = 0
     fire_state = OFF 
 
     def __init__ (self):
@@ -114,10 +121,21 @@ def init_GPIO():
     GPIO.setup(OUT_RELAY_PIN, GPIO.OUT)
 
 
+def toggle_on ():
+    my_logger.debug ('Toggle fire ON as ' + str (my_fire.time_since_last_on) + ' seconds since last on')
+    GPIO.output (OUT_RELAY_PIN, True)
+    time.sleep(0.2)
+    GPIO.output (OUT_RELAY_PIN, False)
+    time.sleep(0.2)
+
+
 def switch_fire (off_or_on):
     if off_or_on == ON:
+        if my_fire.time_since_last_on > RELAY_TOGGLE_THRESHHOLD:
+            toggle_on ()
         GPIO.output (OUT_RELAY_PIN, True)
         my_fire.fire_state = ON
+        my_fire.time_since_last_on = 0
         update_fire_status (ON)
         if my_fire.debug_level >=1:
     	    print ("Fire is ON")
@@ -454,6 +472,9 @@ try:
             print ('State: ' + str(my_fire.fire_state))
   
         control_temperature (my_fire.desired_temp_get(), my_fire.measured_temp_get()) 
+
+        if my_fire.fire_state == OFF:
+            my_fire.time_since_last_on += 1
 
         time.sleep(1)
 # TODO - make this exception more specific
